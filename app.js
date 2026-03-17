@@ -48,6 +48,11 @@ app.post("/login", async (req, res) => {
       return res.redirect("/?error=1");
     }
 
+    if (user.estado !== "activo") {
+      await logAttempt(email, user.idusuario, false, "Usuario inactivo");
+      return res.redirect("/?inactive=1");
+    }
+
     if (isBlocked(user)) {
       await logAttempt(email, user.idusuario, false, "Usuario bloqueado");
       return res.redirect("/?blocked=1");
@@ -57,6 +62,13 @@ app.post("/login", async (req, res) => {
 
     if (!validPassword) {
       await registerFailedAttempt(user, email);
+
+      const refreshedUser = await getUserByEmail(email);
+
+      if (refreshedUser && isBlocked(refreshedUser)) {
+        return res.redirect("/?blocked=1");
+      }
+
       return res.redirect("/?error=1");
     }
 

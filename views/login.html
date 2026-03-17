@@ -55,6 +55,22 @@
       `;
     }
 
+    if (params.get("blocked") === "1") {
+      container.innerHTML = `
+        <div class="message error-message">
+          🔒 Usuario bloqueado temporalmente por varios intentos fallidos. Intente más tarde.
+        </div>
+      `;
+    }
+
+    if (params.get("inactive") === "1") {
+      container.innerHTML = `
+        <div class="message warning-message">
+          ⚠️ El usuario se encuentra inactivo.
+        </div>
+      `;
+    }
+
     if (params.get("auth") === "required") {
       container.innerHTML = `
         <div class="message warning-message">
