@@ -1,4 +1,5 @@
 const pool = require("../db/connection");
+const bcrypt = require("bcrypt");
 
 async function getUserByEmail(email) {
   const result = await pool.query(
@@ -9,16 +10,18 @@ async function getUserByEmail(email) {
   return result.rows[0];
 }
 
-function validatePassword(plainPassword, dbPassword) {
-  return plainPassword === dbPassword;
+async function validatePassword(plainPassword, dbPassword) {
+  return await bcrypt.compare(plainPassword, dbPassword);
 }
 
 async function createUser(nombre, email, password) {
+  const hashedPassword = await bcrypt.hash(password, 10);
+
   const result = await pool.query(
     `INSERT INTO tblUsuario (nombre, email, password)
      VALUES ($1, $2, $3)
      RETURNING *`,
-    [nombre, email, password]
+    [nombre, email, hashedPassword]
   );
 
   return result.rows[0];

@@ -3,50 +3,67 @@ const pool = require("../db/connection");
 const MAX_ATTEMPTS = 3;
 const BLOCK_MINUTES = 2;
 
-async function getAttemptByEmail(email) {
-  const result = await pool.query(
-    "SELECT * FROM login_attempts WHERE email = $1",
-    [email]
+async function logAttempt(email, idUsuario, exitoso, observacion) {
+  await pool.query(
+    `INSERT INTO tblIntentoLogin (email_ingresado, idUsuario, exitoso, observacion)
+     VALUES ($1, $2, $3, $4)`,
+    [email, idUsuario, exitoso, observacion]
   );
-
-  return result.rows[0];
 }
 
-function isBlocked(attempt) {
-  return attempt && attempt.blocked_until && new Date(attempt.blocked_until) > new Date();
+function isBlocked(user) {
+  return user && user.bloqueado_hasta && new Date(user.bloqueado_hasta) > new Date();
 }
 
-async function registerFailedAttempt(email, attempt) {
-  if (!attempt) {
-    await pool.query(
-      "INSERT INTO login_attempts (email, failed_attempts, blocked_until) VALUES ($1, $2, $3)",
-      [email, 1, null]
-    );
-    return;
-  }
+async function registerFailedAttempt(user, email) {
+  const newAttempts = (user.intentos_fallidos || 0) + 1;
 
-  const newAttempts = attempt.failed_attempts + 1;
   const blockedUntil =
     newAttempts >= MAX_ATTEMPTS
       ? new Date(Date.now() + BLOCK_MINUTES * 60 * 1000)
       : null;
 
   await pool.query(
-    "UPDATE login_attempts SET failed_attempts = $1, blocked_until = $2 WHERE email = $3",
-    [newAttempts, blockedUntil, email]
+    `UPDATE tblUsuario
+     SET intentos_fallidos = $1, bloqueado_hasta = $2
+     WHERE idUsuario = $3`,
+    [newAttempts, blockedUntil, user.idusuario]
+  );
+
+  await pool.query(
+    `INSERT INTO tblIntentoLogin (email_ingresado, idUsuario, exitoso, observacion)
+     VALUES ($1, $2, $3, $4)`,
+    [
+      email,
+      user.idusuario,
+      false,
+      newAttempts >= MAX_ATTEMPTS
+        ? `Usuario bloqueado por ${BLOCK_MINUTES} minutos`
+        : "Contraseña incorrecta"
+    ]
   );
 }
 
-async function clearAttempts(email) {
+async function clearAttempts(user, email) {
   await pool.query(
-    "DELETE FROM login_attempts WHERE email = $1",
-    [email]
+    `UPDATE tblUsuario
+     SET intentos_fallidos = 0, bloqueado_hasta = NULL
+     WHERE idUsuario = $1`,
+    [user.idusuario]
+  );
+
+  await pool.query(
+    `INSERT INTO tblIntentoLogin (email_ingresado, idUsuario, exitoso, observacion)
+     VALUES ($1, $2, $3, $4)`,
+    [email, user.idusuario, true, "Login exitoso"]
   );
 }
 
 module.exports = {
-  getAttemptByEmail,
   isBlocked,
   registerFailedAttempt,
-  clearAttempts
+  clearAttempts,
+  logAttempt,
+  MAX_ATTEMPTS,
+  BLOCK_MINUTES
 };

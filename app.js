@@ -10,6 +10,13 @@ const {
   createUser
 } = require("./services/authService");
 
+const {
+  isBlocked,
+  registerFailedAttempt,
+  clearAttempts,
+  logAttempt
+} = require("./services/attemptService");
+
 const app = express();
 
 app.use(express.urlencoded({ extended: true }));
@@ -37,14 +44,23 @@ app.post("/login", async (req, res) => {
     const user = await getUserByEmail(email);
 
     if (!user) {
+      await logAttempt(email, null, false, "Usuario no encontrado");
       return res.redirect("/?error=1");
     }
 
-    const validPassword = validatePassword(password, user.password);
+    if (isBlocked(user)) {
+      await logAttempt(email, user.idusuario, false, "Usuario bloqueado");
+      return res.redirect("/?blocked=1");
+    }
+
+    const validPassword = await validatePassword(password, user.password);
 
     if (!validPassword) {
+      await registerFailedAttempt(user, email);
       return res.redirect("/?error=1");
     }
+
+    await clearAttempts(user, email);
 
     req.session.user = {
       id: user.idusuario,
