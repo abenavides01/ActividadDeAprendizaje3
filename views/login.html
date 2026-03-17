@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Iniciar Sesión</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <div class="page">
+    <div class="card login-card">
+      <div class="brand-badge">Sistema</div>
+      <h1>Iniciar Sesión</h1>
+      <p class="subtitle">Ingrese su correo y contraseña para continuar</p>
+
+      <div id="message-container"></div>
+
+      <form action="/login" method="POST" class="form">
+        <div class="form-group">
+          <label for="email">Correo electrónico</label>
+          <input
+            type="email"
+            id="email"
+            name="email"
+            placeholder="correo@ejemplo.com"
+            required
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="password">Contraseña</label>
+          <input
+            type="password"
+            id="password"
+            name="password"
+            placeholder="********"
+            required
+          >
+        </div>
+
+        <button type="submit" class="btn-primary">Ingresar</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const container = document.getElementById("message-container");
+
+    if (params.get("error") === "1") {
+      container.innerHTML = `
+        <div class="message error-message">
+          ❌ Usuario no existe o los datos son incorrectos.
+        </div>
+      `;
+    }
+
+    if (params.get("auth") === "required") {
+      container.innerHTML = `
+        <div class="message warning-message">
+          🔒 Debe iniciar sesión primero.
+        </div>
+      `;
+    }
+
+    if (params.get("logout") === "1") {
+      container.innerHTML = `
+        <div class="message info-message">
+          👋 Sesión cerrada correctamente.
+        </div>
+      `;
+    }
+  </script>
+</body>
+</html>

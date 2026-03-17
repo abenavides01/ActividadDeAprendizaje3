@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bienvenida</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <div class="page">
+    <div class="card welcome-card">
+      {{message}}
+
+      <div class="welcome-icon">👋</div>
+      <h1>Bienvenido</h1>
+      <p class="welcome-text">
+        Hola, <strong>{{name}}</strong>
+      </p>
+      <p class="subtitle">
+        Has iniciado sesión correctamente en el sistema.
+      </p>
+
+      <a href="/logout" class="btn-primary btn-link">Cerrar sesión</a>
+    </div>
+  </div>
+</body>
+</html>
